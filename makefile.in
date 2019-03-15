@@ -71,7 +71,7 @@ vtest39: vtest39.o libfec.a
 vtest615: vtest615.o libfec.a
 	gcc -g -o $@ $^ -lm
 
-rstest: rstest.o libfec.a
+rstest: rstest.o exercise_rs_char.o exercise_rs_int.o exercise_rs_8.o exercise_rs_ccsds.o libfec.a
 	gcc -g -o $@ $^
 
 rs_speedtest: rs_speedtest.o libfec.a
@@ -165,17 +165,17 @@ gen_ccsds_tal.o: gen_ccsds_tal.c
 ccsds_tal.c: gen_ccsds_tal
 	./gen_ccsds_tal > ccsds_tal.c
 
-exercise_char.o: exercise.c
+exercise_rs_char.o: exercise_rs_char.c exercise_rs.h fec.h
 	gcc $(CFLAGS) -c -o $@ $<
 
-exercise_int.o: exercise.c
-	gcc -DBIGSYM=1 $(CFLAGS) -c -o $@ $<
+exercise_rs_int.o: exercise_rs_int.c exercise_rs.h fec.h
+	gcc $(CFLAGS) -c -o $@ $<
 
-exercise_8.o: exercise.c
-	gcc -DFIXED=1 $(CFLAGS) -c -o $@ $<
+exercise_rs_8.o: exercise_rs_8.c exercise_rs.h fec.h
+	gcc $(CFLAGS) -c -o $@ $<
 
-exercise_ccsds.o: exercise.c
-	gcc -DCCSDS=1 $(CFLAGS) -c -o $@ $<
+exercise_rs_ccsds.o: exercise_rs_ccsds.c exercise_rs.h fec.h
+	gcc $(CFLAGS) -c -o $@ $<
 
 viterbi27.o: viterbi27.c fec.h
 

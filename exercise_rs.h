@@ -1,47 +1,57 @@
+/* The guts of the Reed-Solomon decoder tester, meant to be #included
+ * into a function body with the following typedefs, macros and variables supplied
+ * according to the code parameters:
+
+ * data_t - a typedef for the data symbol
+ * NROOTS - the number of roots in the RS code generator polynomial,
+ *          which is the same as the number of parity symbols in a block.
+            Integer variable or literal.
+ * NN - the total number of symbols in a RS block. Integer variable or literal.
+ * ENCODE_RS - the encoding function for the RS code.
+ * DECODE_RS - the decoding function for the RS code.
+ *
+ * The memset(), memcmp(), memcpy(), printf() and random() functions are used.
+ * The appropriate header file declaring these functions (usually <string.h>,
+ * <stdio.h>, <stdlib.h>) must be included by the calling program.
+ */
+
 /* Exercise an RS codec a specified number of times using random
  * data and error patterns
  *
  * Copyright 2002 Phil Karn, KA9Q
  * May be used under the terms of the GNU Lesser General Public License (LGPL)
+ *
+ * Modified by Ferdinand Blomqvist in order to be included in funtion bodies.
+ * This was done to reduce code duplication.
  */
 #define FLAG_ERASURE 1 /* Randomly flag 50% of errors as erasures */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#ifdef FIXED
-#include "fixed.h"
-#define EXERCISE exercise_8
-#elif defined(CCSDS)
-#include "fixed.h"
-#include "ccsds.h"
-#define EXERCISE exercise_ccsds
-#elif defined(BIGSYM)
-#include "int.h"
-#define EXERCISE exercise_int
-#else
-#include "char.h"
-#define EXERCISE exercise_char
+#if !defined(NROOTS)
+#error "NROOTS not defined"
 #endif
+
+#if !defined(NN)
+#error "NN not defined"
+#endif
+
+#if !defined(ENCODE_RS)
+#error "ENCODE_RS not defined"
+#endif
+
+#if !defined(DECODE_RS)
+#error "DECODE_RS not defined"
+#endif
+
 
 #ifdef FIXED
 #define PRINTPARM printf("(255,223):");
 #elif defined(CCSDS)
 #define PRINTPARM printf("CCSDS (255,223):");
 #else
-#define PRINTPARM printf("(%d,%d):",rs->nn,rs->nn-rs->nroots);
+#define PRINTPARM printf("(%d,%d):",NN,NN-NROOTS);
 #endif
 
-/* Exercise the RS codec passed as an argument */
-int EXERCISE(
-#if !defined(CCSDS) && !defined(FIXED)
-void *p,
-#endif
-int trials){
-#if !defined(CCSDS) && !defined(FIXED)
-  struct rs *rs = (struct rs *)p;
-#endif
+{
   data_t block[NN],tblock[NN];
   int i;
   int errors;
@@ -59,7 +69,7 @@ int trials){
       /* Load block with random data and encode */
       for(i=0;i<NN-NROOTS;i++)
 	block[i] = random() & NN;
-      
+
 #if defined(CCSDS) || defined(FIXED)
       ENCODE_RS(&block[0],&block[NN-NROOTS],0);
 #else
@@ -118,5 +128,5 @@ int trials){
       }
     }
   }
-  return decoder_errors;
+  //return decoder_errors;
 }
