@@ -11,6 +11,7 @@
 
 #include "int.h"
 #include "rs-common.h"
+#include "fec.h"
 
 int decode_rs_int(void *p, data_t *data, int *eras_pos, int no_eras){
   int retval;

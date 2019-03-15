@@ -6,6 +6,7 @@
 
 #include "int.h"
 #include "rs-common.h"
+#include "fec.h"
 
 void encode_rs_int(void *p,data_t *data, data_t *parity){
   struct rs *rs = (struct rs *)p;
