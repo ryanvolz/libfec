@@ -23,6 +23,12 @@
  *
  * Modified by Ferdinand Blomqvist in order to be included in funtion bodies.
  * This was done to reduce code duplication.
+ *
+ * This version of the tester tests what happens when we have uncorrectable
+ * errors.  The decoder should always return a codeword or give up and report
+ * that the decoding failed. In order to ensure this we test for silent
+ * failures, i.e., cases where the decoder reports success but the returned
+ * word is not a codeword.
  */
 
 #if !defined(NROOTS)
@@ -50,13 +56,20 @@
   int derrors;
   int errval,errloc;
   int erasures;
-  int decodes_wrong = 0;
-  int incorrect_ret_val = 0;
-  int wrong_error_position = 0;
+  int non_codeword = 0;
   int num_words = 0;
+  int returns_success = 0;
+  int returns_fail = 0;
+  int only_when_zero = 1;
+  int only_with_errors = 1;
 
-  for(errors=0;errors<=NROOTS/2; errors++){
-    for(erasures=0;erasures<=NROOTS-2*errors; erasures++){
+  for(errors=1;errors<=NROOTS; errors++){
+    erasures = NROOTS - 2*errors + 1;
+    if(erasures < 0)
+      erasures = 0;
+
+    int cutoff = NROOTS <= len - errors ? NROOTS : len - errors;
+    for(;erasures<=cutoff; erasures++){
       for(j=0; j < trials; j++){
 	/* Load block with random data and encode */
 	for(i=0;i<len-NROOTS;i++)
@@ -112,43 +125,60 @@
 	derrors = DECODE_RS(rs,tblock,derrlocs,erasures);
 #endif
 
-	if(derrors != errors + erasures){
-	  incorrect_ret_val++;
-	  if(verbose >= VERBOSE_VERY){
-	    printf("(%d,%d)_%d:",len,len-NROOTS,NN+1);
-	    printf(" decoder says %d errors, true number is %d\n",derrors,errors+erasures);
-	  }
-	}
-	for(i=0;i<derrors;i++){
-	  if(errlocs[derrlocs[i]] == 0){
-	    wrong_error_position++;
-	    if(verbose >= VERBOSE_VERY){
+	if(derrors >= 0){
+	  returns_success++;
+	  /* We check that the returned word is actually a codeword.  The obious
+	   * way to do this would be to compute the syndrome, but we dont want
+	   * to replicate that code here. However, all the codes are in
+	   * systematic form, and therefore we can encode the returned word,
+	   * and see whether it changes or not. */
+
+	  data_t nblock[NN];
+	  memcpy(nblock,tblock,sizeof(tblock));
+	  //memcpy(block,tblock,sizeof(tblock));
+#if defined(CCSDS) || defined(FIXED)
+	  ENCODE_RS(nblock,&nblock[len-NROOTS],pad);
+#else
+	  ENCODE_RS(rs,nblock,&nblock[len-NROOTS]);
+#endif
+	  if(memcmp(tblock,nblock,sizeof(tblock)) != 0){
+	    non_codeword++;
+
+	    if(derrors != 0)
+	      only_when_zero = 0;
+
+	    if(erasures > 0)
+	      only_with_errors = 0;
+
+	    if(verbose >= VERBOSE_VERY) {
 	      printf("(%d,%d)_%d:",len,len-NROOTS,NN+1);
-	      printf(" decoder indicates error in location %d without error\n",derrlocs[i]);
+	      print_vec(" silent failure\nc:", block, len, " %02x");
+	      print_vec("r:", rblock, len, " %02x");
+	      print_vec_xor("e:", rblock, block, len, " %02x");
+	      print_vec("x:", tblock, len, " %02x");
+	      print_vec("erasurelocs:", errlocs, len, " %d");
 	    }
 	  }
 	}
-	if(memcmp(tblock,block,sizeof(tblock)) != 0){
-	  decodes_wrong++;
-	  if(verbose >= VERBOSE_VERY){
-	    printf("(%d,%d)_%d:",len,len-NROOTS,NN+1);
-	    print_vec(" uncorrected errors\nc:", block, len, " %02x");
-	    print_vec("r:", rblock, len, " %02x");
-	    print_vec_xor("e:", rblock, block, len, " %02x");
-	    print_vec("x:", tblock, len, " %02x");
-	    print_vec("erasurelocs:", errlocs, len, " %d");
-	  }
-	}
+	else
+	  returns_fail++;
       }
       num_words += trials;
     }
   }
 
-  if(verbose >= VERBOSE_SUMMARY){
-    printf("Decodes wrong: %d / %d\n", decodes_wrong, num_words);
-    printf("Wrong return value: %d / %d\n", incorrect_ret_val, num_words);
-    printf("Wrong error position: %d\n", wrong_error_position);
+  if(verbose >= VERBOSE_SUMMARY) {
+    printf("decoder gives up: %d / %d\n", returns_fail, num_words);
+    printf("decoder returns success: %d / %d\n", returns_success, num_words);
+    printf("returns non-codeword: %d / %d\n", non_codeword, returns_success);
+    if(non_codeword) {
+      printf("Fails only when decoder returns 0: %s\n",
+	  only_when_zero ? "YES" : "NO");
+      printf("Fails only when no erasures: %s\n",
+	  only_with_errors ? "YES" : "NO");
+    }
   }
 
-  return decodes_wrong + wrong_error_position + incorrect_ret_val;
+  return non_codeword;
 }
+

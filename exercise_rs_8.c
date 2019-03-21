@@ -9,8 +9,17 @@
 #define ENCODE_RS encode_rs_8
 #define DECODE_RS decode_rs_8
 
-void exercise_rs_8(int trials){
+int exercise_rs_8(int pad, int trials, int verbose){
+  int len = NN - pad;
 
 #include "exercise_rs.h"
+
+}
+
+int exercise_rs_bc_8(int pad, int trials, int verbose)
+{
+  int len = NN - pad;
+
+#include "exercise_rs_bc.h"
 
 }

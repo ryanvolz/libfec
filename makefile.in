@@ -165,16 +165,16 @@ gen_ccsds_tal.o: gen_ccsds_tal.c
 ccsds_tal.c: gen_ccsds_tal
 	./gen_ccsds_tal > ccsds_tal.c
 
-exercise_rs_char.o: exercise_rs_char.c exercise_rs.h fec.h
+exercise_rs_char.o: exercise_rs_char.c exercise_rs.h exercise_rs_bc.h exercise.h
 	gcc $(CFLAGS) -c -o $@ $<
 
-exercise_rs_int.o: exercise_rs_int.c exercise_rs.h fec.h
+exercise_rs_int.o: exercise_rs_int.c exercise_rs.h exercise_rs_bc.h exercise.h
 	gcc $(CFLAGS) -c -o $@ $<
 
-exercise_rs_8.o: exercise_rs_8.c exercise_rs.h fec.h
+exercise_rs_8.o: exercise_rs_8.c exercise_rs.h exercise_rs_bc.h exercise.h
 	gcc $(CFLAGS) -c -o $@ $<
 
-exercise_rs_ccsds.o: exercise_rs_ccsds.c exercise_rs.h fec.h
+exercise_rs_ccsds.o: exercise_rs_ccsds.c exercise_rs.h exercise_rs_bc.h exercise.h
 	gcc $(CFLAGS) -c -o $@ $<
 
 viterbi27.o: viterbi27.c fec.h
