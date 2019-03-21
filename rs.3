@@ -12,9 +12,9 @@ encode_rs_8, decode_rs_8, encode_rs_ccsds, decode_rs_ccsds
 void *init_rs_int(int symsize,int gfpoly,int fcr,int prim,
      int nroots,int pad);
 
-void encode_rs_int(void *rs,int *data,int *parity);
+void encode_rs_int(void *rs,unsigned int *data,unsigned int *parity);
 
-int decode_rs_int(void *rs,int *data,int *eras_pos,int no_eras);
+int decode_rs_int(void *rs,unsigned int *data,int *eras_pos,int no_eras);
 
 void free_rs_int(void *rs);
 
@@ -55,8 +55,8 @@ decoding. For optimal performance in a variety of applications, three
 sets of functions are supplied. To access these functions, add "-lfec"
 to your linker command line.
 
-The functions with names ending in \fB_int\fR handle data in integer arrays,
-permitting arbitrarily large codewords limited only by machine
+The functions with names ending in \fB_int\fR handle data in unsigned 
+integer arrays, permitting arbitrarily large codewords limited only by machine
 resources.
 
 The functions with names ending in \fB_char\fR take unsigned char arrays and can
