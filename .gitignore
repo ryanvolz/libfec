@@ -1,0 +1,15 @@
+/*.o
+/libfec.a
+/libfec.so
+/makefile
+/config.h
+/config.log
+/config.status
+/dtest
+/rstest
+/vtest27
+/vtest29
+/vtest39
+/vtest615
+/sumsq_test
+/peaktest
