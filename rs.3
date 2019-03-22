@@ -170,6 +170,8 @@ and free functions. These functions return NULL on error.
 
 The \fBdecode_\fR functions return a count of corrected
 symbols, or -1 if the block was uncorrectible.
+Note that "erased" symbols do not count as corrected symbols
+unless the symbol at the erased position was corrupted.
 
 .SH AUTHOR
 Phil Karn, KA9Q (karn@ka9q.net), based heavily on earlier work by Robert

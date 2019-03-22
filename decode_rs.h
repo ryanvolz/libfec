@@ -77,6 +77,7 @@
   data_t b[NROOTS+1], t[NROOTS+1], omega[NROOTS+1];
   data_t root[NROOTS], reg[NROOTS+1], loc[NROOTS];
   int syn_error, count;
+  data_t cor[NROOTS];
 
   /* form the syndromes; i.e., evaluate data(x) at roots of g(x) */
   for(i=0;i<NROOTS;i++)
@@ -263,12 +264,19 @@
    * Compute error values in poly-form. num1 = omega(inv(X(l))), num2 =
    * inv(X(l))**(FCR-1) and den = lambda_pr(inv(X(l))) all in poly-form
    */
+  int num_corrected = 0;
   for (j = count-1; j >=0; j--) {
     num1 = 0;
     for (i = deg_omega; i >= 0; i--) {
       if (omega[i] != A0)
 	num1  ^= ALPHA_TO[MODNN(omega[i] + i * root[j])];
     }
+
+    if(num1 == 0  || loc[j] < PAD) {
+      cor[j] = 0;
+      continue;
+    }
+
     num2 = ALPHA_TO[MODNN(root[j] * (FCR - 1) + NN)];
     den = 0;
     
@@ -285,14 +293,20 @@
     }
 #endif
     /* Apply error to data */
-    if (num1 != 0 && loc[j] >= PAD) {
-      data[loc[j]-PAD] ^= ALPHA_TO[MODNN(INDEX_OF[num1] + INDEX_OF[num2] + NN - INDEX_OF[den])];
+    cor[j] = ALPHA_TO[MODNN(INDEX_OF[num1] + INDEX_OF[num2] + NN - INDEX_OF[den])];
+    data[loc[j]-PAD] ^= cor[j];
+    num_corrected++;
+  }
+
+  if(eras_pos != NULL){
+    j = 0;
+    for(i=0;i<count;i++) {
+      if(cor[i])
+	eras_pos[j++] = loc[i] - PAD;
     }
   }
- finish:
-  if(eras_pos != NULL){
-    for(i=0;i<count;i++)
-      eras_pos[i] = loc[i] - PAD;
-  }
+  count = num_corrected;
+
+finish:
   retval = count;
 }
