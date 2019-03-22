@@ -87,19 +87,31 @@
 	  tblock[errloc] ^= errval;
 	}
 
+	int nerrors = errors;
+	int nerasures = 0;
 	/* Generating random erasures */
 	for(i=0;i<erasures;i++){
-	  do {
-	    errval = random() & NN;
-	  } while(errval == 0); /* Error value must be nonzero */
-
 	  do {
 	    errloc = random() % len;
 	  } while(errlocs[errloc] != 0); /* Must not choose the same location twice */
 
-	  errlocs[errloc] = 1;
 	  derrlocs[i] = errloc;
-	  tblock[errloc] ^= errval;
+
+	  if(random() & 1) {
+	    /* Erasure with the symbol intact */
+	    errlocs[errloc] = 2;
+	    nerasures++;
+	  }
+	  else {
+	    /* Erasure with corrupted symbol */
+	    do {
+	      errval = random() & NN;
+	    } while(errval == 0); /* Error value must be nonzero */
+
+	    errlocs[errloc] = 1;
+	    tblock[errloc] ^= errval;
+	    nerrors++;
+	  }
 	}
 
 	if(verbose >= VERBOSE_VERY)
@@ -112,15 +124,15 @@
 	derrors = DECODE_RS(rs,tblock,derrlocs,erasures);
 #endif
 
-	if(derrors != errors + erasures){
+	if(derrors != nerrors){
 	  incorrect_ret_val++;
 	  if(verbose >= VERBOSE_VERY){
 	    printf("(%d,%d)_%d:",len,len-NROOTS,NN+1);
-	    printf(" decoder says %d errors, true number is %d\n",derrors,errors+erasures);
+	    printf(" decoder says %d errors, true number is %d\n",derrors,nerrors);
 	  }
 	}
 	for(i=0;i<derrors;i++){
-	  if(errlocs[derrlocs[i]] == 0){
+	  if(errlocs[derrlocs[i]] != 1){
 	    wrong_error_position++;
 	    if(verbose >= VERBOSE_VERY){
 	      printf("(%d,%d)_%d:",len,len-NROOTS,NN+1);
