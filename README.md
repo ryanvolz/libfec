@@ -1,7 +1,7 @@
 This is a version of Phil Karn's libfec with some Reed-Solomon decoder bug
-fixes applied, see [#1](issues/1), [#2](issues/2), [#4](issues/4). The tests
-for the RS encoder and decoder are also extended to ensure correct behaviour in
-vider variety of cases.
+fixes applied, see [#1](/../../issues/1), [#2](/../../issues/2),
+[#4](/../../issues/4). The tests for the RS encoder and decoder are also
+extended to ensure correct behaviour in vider variety of cases.
 
 Phil's original readme is reproduced below:
 ```
