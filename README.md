@@ -1,3 +1,9 @@
+This is a version of Phil Karn's libfec with some Reed-Solomon decoder bug
+fixes applied, see #1, #2, #4. The tests for the RS encoder and decoder are
+also extended to ensure correct behaviour in vider variety of cases.
+
+Phil's original readme is reproduced below:
+```
 COPYRIGHT
 
 This package is copyright 2006 by Phil Karn, KA9Q. It may be used
@@ -118,3 +124,5 @@ Added error checking, fixed alignment bug in SSE2 versions of Viterbi decoders c
 
 feclib version 2.1.1 June 6 2006
 Fix test/benchmark time measurement on Linux
+```
+
