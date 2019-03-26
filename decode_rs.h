@@ -74,10 +74,11 @@
   data_t u,q,tmp,num1,num2,den,discr_r;
   data_t lambda[NROOTS+1], s[NROOTS];	/* Err+Eras Locator poly
 					 * and syndrome poly */
+  data_t si[NROOTS];	/* Syndrome in index form */
   data_t b[NROOTS+1], t[NROOTS+1], omega[NROOTS+1];
   data_t root[NROOTS], reg[NROOTS+1], loc[NROOTS];
-  int syn_error, count;
   data_t cor[NROOTS];
+  int syn_error, count;
 
   /* form the syndromes; i.e., evaluate data(x) at roots of g(x) */
   for(i=0;i<NROOTS;i++)
@@ -97,7 +98,7 @@
   syn_error = 0;
   for(i=0;i<NROOTS;i++){
     syn_error |= s[i];
-    s[i] = INDEX_OF[s[i]];
+    si[i] = INDEX_OF[s[i]];
   }
 
   if (!syn_error) {
@@ -171,8 +172,8 @@
     /* Compute discrepancy at the r-th step in poly-form */
     discr_r = 0;
     for (i = 0; i < r; i++){
-      if ((lambda[i] != 0) && (s[r-i-1] != A0)) {
-	discr_r ^= ALPHA_TO[MODNN(INDEX_OF[lambda[i]] + s[r-i-1])];
+      if ((lambda[i] != 0) && (si[r-i-1] != A0)) {
+	discr_r ^= ALPHA_TO[MODNN(INDEX_OF[lambda[i]] + si[r-i-1])];
       }
     }
     discr_r = INDEX_OF[discr_r];	/* Index form */
@@ -213,6 +214,15 @@
     if(lambda[i] != A0)
       deg_lambda = i;
   }
+
+  if (deg_lambda == 0) {
+    /* deg(lambda) is zero even though the syndrome is non-zero
+     * => uncorrectable error detected
+     */
+    count = RS_ERROR_DEG_LAMBDA_ZERO;
+    goto finish;
+  }
+
   /* Find roots of the error+erasure locator polynomial by Chien search */
   memcpy(&reg[1],&lambda[1],NROOTS*sizeof(reg[0]));
   count = 0;		/* Number of roots of lambda(x) */
@@ -230,6 +240,11 @@
 #if DEBUG>=2
     printf("count %d root %d loc %d\n",count,i,k);
 #endif
+    if(k < PAD) {
+      /* Impossible error location. Uncorrectable error. */
+      count = RS_ERROR_IMPOSSIBLE_ERR_POS;
+      goto finish;
+    }
     root[count] = i;
     loc[count] = k;
     /* If we've already found max possible roots,
@@ -243,7 +258,7 @@
      * deg(lambda) unequal to number of roots => uncorrectable
      * error detected
      */
-    count = -1;
+    count = RS_ERROR_DEG_LAMBDA_NEQ_COUNT;
     goto finish;
   }
   /*
@@ -254,8 +269,8 @@
   for (i = 0; i <= deg_omega;i++){
     tmp = 0;
     for(j=i;j >= 0; j--){
-      if ((s[i - j] != A0) && (lambda[j] != A0))
-	tmp ^= ALPHA_TO[MODNN(s[i - j] + lambda[j])];
+      if ((si[i - j] != A0) && (lambda[j] != A0))
+	tmp ^= ALPHA_TO[MODNN(si[i - j] + lambda[j])];
     }
     omega[i] = INDEX_OF[tmp];
   }
@@ -272,7 +287,7 @@
 	num1  ^= ALPHA_TO[MODNN(omega[i] + i * root[j])];
     }
 
-    if(num1 == 0  || loc[j] < PAD) {
+    if(num1 == 0) {
       cor[j] = 0;
       continue;
     }
@@ -292,10 +307,31 @@
       goto finish;
     }
 #endif
-    /* Apply error to data */
     cor[j] = ALPHA_TO[MODNN(INDEX_OF[num1] + INDEX_OF[num2] + NN - INDEX_OF[den])];
-    data[loc[j]-PAD] ^= cor[j];
     num_corrected++;
+  }
+
+  /* We compute the syndrome of the 'error' to and check that it matches the
+   * syndrome of the received word */
+  for(i=0;i<NROOTS;i++) {
+    data_t temp = 0;
+    for(j=0;j<count;j++) {
+      if(cor[j]) {
+	int t = (FCR + i) * PRIM * (NN-loc[j]-1);
+	temp ^= ALPHA_TO[MODNN(INDEX_OF[cor[j]] + t)];
+      }
+    }
+
+    if(temp ^ s[i]) {
+      count = RS_ERROR_NOT_A_CODEWORD;
+      goto finish;
+    }
+  }
+
+  /* Apply error to data */
+  for(i=0;i<count;i++) {
+    if(cor[i])
+      data[loc[i]-PAD] ^= cor[i];
   }
 
   if(eras_pos != NULL){

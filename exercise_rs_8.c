@@ -1,4 +1,5 @@
 #include "fixed.h"
+#include "rs-common.h"
 #include "exercise.h"
 
 #include <stdio.h>

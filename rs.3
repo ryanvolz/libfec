@@ -141,12 +141,13 @@ decoder will fail if an input symbol exceeds its allowable range.
 or with the \fB_char\fR functions when 8-bit symbols are specified.)
 
 The decoder corrects the symbols "in place", returning the number
-of symbols in error. If the codeword is uncorrectable, -1 is returned
-and the data block is unchanged. If \fBeras_pos\fR is non-null, it is
+of symbols in error. If the codeword is uncorrectable, then a negative number
+is returned and the data block is unchanged.
+If \fBeras_pos\fR is non-null, it is
 used to return a list of corrected symbol positions, in no particular
-order.  This means that the
-array passed through this parameter \fImust\fR have at least \fBnroots\fR
-elements to prevent a possible buffer overflow.
+order.
+This means that the array passed through this parameter \fImust\fR have at
+least \fBnroots\fR elements to prevent a possible buffer overflow.
 
 The \fBfree_rs_int\fR and \fBfree_rs_char\fR functions free the internal
 space allocated by the \fBinit_rs_int\fR and \fBinit_rs_char\fR functions,
@@ -169,7 +170,7 @@ control structure that must be passed to the corresponding encode, decode
 and free functions. These functions return NULL on error.
 
 The \fBdecode_\fR functions return a count of corrected
-symbols, or -1 if the block was uncorrectible.
+symbols, or a negative number if the block was uncorrectible.
 Note that "erased" symbols do not count as corrected symbols
 unless the symbol at the erased position was corrupted.
 

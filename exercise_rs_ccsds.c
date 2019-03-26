@@ -1,4 +1,5 @@
 #include "ccsds.h"
+#include "rs-common.h"
 #include "exercise.h"
 
 #include <stdio.h>

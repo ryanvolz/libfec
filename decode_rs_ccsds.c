@@ -5,7 +5,7 @@
  * May be used under the terms of the GNU Lesser General Public License (LGPL)
  */
 #include "ccsds.h"
-#include "fec.h"
+#include "rs-common.h"
 #include "fec.h"
 
 int decode_rs_ccsds(data_t *data,int *eras_pos,int no_eras,int pad){

@@ -62,6 +62,10 @@
   int returns_fail = 0;
   int only_when_zero = 1;
   int only_with_errors = 1;
+  int err_deg_lamda_zero = 0;
+  int err_imp_err_pos = 0;
+  int err_lambda_neq_count = 0;
+  int err_not_a_codeword = 0;
 
   for(errors=1;errors<=NROOTS; errors++){
     erasures = NROOTS - 2*errors + 1;
@@ -135,7 +139,7 @@
 
 	  data_t nblock[NN];
 	  memcpy(nblock,tblock,sizeof(tblock));
-	  //memcpy(block,tblock,sizeof(tblock));
+
 #if defined(CCSDS) || defined(FIXED)
 	  ENCODE_RS(nblock,&nblock[len-NROOTS],pad);
 #else
@@ -160,8 +164,15 @@
 	    }
 	  }
 	}
-	else
+	else {
+	  switch(derrors) {
+	    case RS_ERROR_DEG_LAMBDA_ZERO: err_deg_lamda_zero++; break;
+	    case RS_ERROR_IMPOSSIBLE_ERR_POS: err_imp_err_pos++; break;
+	    case RS_ERROR_DEG_LAMBDA_NEQ_COUNT: err_lambda_neq_count++; break;
+	    case RS_ERROR_NOT_A_CODEWORD: err_not_a_codeword++; break;
+	  }
 	  returns_fail++;
+	}
       }
       num_words += trials;
     }
@@ -169,8 +180,11 @@
 
   if(verbose >= VERBOSE_SUMMARY) {
     printf("decoder gives up: %d / %d\n", returns_fail, num_words);
+    printf("  deg(lamda) zero: %d / %d\n", err_deg_lamda_zero, returns_fail);
+    printf("  bad err pos: %d / %d\n", err_imp_err_pos, returns_fail);
+    printf("  lambda neq count: %d / %d\n", err_lambda_neq_count, returns_fail);
+    printf("  not a codeword: %d / %d\n", err_not_a_codeword, returns_fail);
     printf("decoder returns success: %d / %d\n", returns_success, num_words);
-    printf("returns non-codeword: %d / %d\n", non_codeword, returns_success);
     if(non_codeword) {
       printf("Fails only when decoder returns 0: %s\n",
 	  only_when_zero ? "YES" : "NO");
