@@ -135,17 +135,16 @@
 	   * way to do this would be to compute the syndrome, but we dont want
 	   * to replicate that code here. However, all the codes are in
 	   * systematic form, and therefore we can encode the returned word,
-	   * and see whether it changes or not. */
+	   * and see whether the parity changes or not. */
 
-	  data_t nblock[NN];
-	  memcpy(nblock,tblock,sizeof(tblock));
+	  data_t nblock[NROOTS];
 
 #if defined(CCSDS) || defined(FIXED)
-	  ENCODE_RS(nblock,&nblock[len-NROOTS],pad);
+	  ENCODE_RS(tblock,nblock,pad);
 #else
-	  ENCODE_RS(rs,nblock,&nblock[len-NROOTS]);
+	  ENCODE_RS(rs,tblock,nblock);
 #endif
-	  if(memcmp(tblock,nblock,sizeof(tblock)) != 0){
+	  if(memcmp(&tblock[len-NROOTS],nblock,sizeof(nblock)) != 0){
 	    non_codeword++;
 
 	    if(derrors != 0)
