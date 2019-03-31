@@ -14,10 +14,8 @@
 #include "fec.h"
 
 int decode_rs_int(void *p, data_t *data, int *eras_pos, int no_eras){
-  int retval;
   struct rs *rs = (struct rs *)p;
- 
+
 #include "decode_rs.h"
-  
-  return retval;
+
 }

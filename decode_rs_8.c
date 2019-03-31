@@ -14,13 +14,11 @@
 #include "fec.h"
 
 int decode_rs_8(data_t *data, int *eras_pos, int no_eras, int pad){
-  int retval;
- 
+
   if(pad < 0 || pad > 222){
     return -1;
   }
 
 #include "decode_rs.h"
-  
-  return retval;
+
 }

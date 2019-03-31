@@ -77,7 +77,6 @@
   data_t si[NROOTS];	/* Syndrome in index form */
   data_t b[NROOTS+1], t[NROOTS+1], omega[NROOTS+1];
   data_t root[NROOTS], reg[NROOTS+1], loc[NROOTS];
-  data_t cor[NROOTS];
   int syn_error, count;
 
   /* form the syndromes; i.e., evaluate data(x) at roots of g(x) */
@@ -105,8 +104,7 @@
     /* if syndrome is zero, data[] is a codeword and there are no
      * errors to correct. So return data[] unmodified
      */
-    count = 0;
-    goto finish;
+    return 0;
   }
   memset(&lambda[1],0,NROOTS*sizeof(lambda[0]));
   lambda[0] = 1;
@@ -126,7 +124,7 @@
 #if DEBUG >= 1
     /* Test code that verifies the erasure locator polynomial just constructed
        Needed only for decoder debugging. */
-    
+
     /* find roots of the erasure location polynomial */
     for(i=1;i<=no_eras;i++)
       reg[i] = INDEX_OF[lambda[i]];
@@ -148,8 +146,7 @@
     }
     if (count != no_eras) {
       printf("count = %d no_eras = %d\n lambda(x) is WRONG\n",count,no_eras);
-      count = -1;
-      goto finish;
+      return -1;
     }
 #if DEBUG >= 2
     printf("\n Erasure positions as determined by roots of Eras Loc Poly:\n");
@@ -161,7 +158,7 @@
   }
   for(i=0;i<NROOTS+1;i++)
     b[i] = INDEX_OF[lambda[i]];
-  
+
   /*
    * Begin Berlekamp-Massey algorithm to determine error+erasure
    * locator polynomial
@@ -219,8 +216,7 @@
     /* deg(lambda) is zero even though the syndrome is non-zero
      * => uncorrectable error detected
      */
-    count = RS_ERROR_DEG_LAMBDA_ZERO;
-    goto finish;
+    return RS_ERROR_DEG_LAMBDA_ZERO;
   }
 
   /* Find roots of the error+erasure locator polynomial by Chien search */
@@ -242,8 +238,7 @@
 #endif
     if(k < PAD) {
       /* Impossible error location. Uncorrectable error. */
-      count = RS_ERROR_IMPOSSIBLE_ERR_POS;
-      goto finish;
+      return RS_ERROR_IMPOSSIBLE_ERR_POS;
     }
     root[count] = i;
     loc[count] = k;
@@ -258,8 +253,7 @@
      * deg(lambda) unequal to number of roots => uncorrectable
      * error detected
      */
-    count = RS_ERROR_DEG_LAMBDA_NEQ_COUNT;
-    goto finish;
+    return RS_ERROR_DEG_LAMBDA_NEQ_COUNT;
   }
   /*
    * Compute err+eras evaluator poly omega(x) = s(x)*lambda(x) (modulo
@@ -275,11 +269,14 @@
     omega[i] = INDEX_OF[tmp];
   }
 
+  /* We reuse the buffer for b with a more appropriate name */
+  data_t *cor = b;
+  int num_corrected = 0;
+
   /*
    * Compute error values in poly-form. num1 = omega(inv(X(l))), num2 =
    * inv(X(l))**(FCR-1) and den = lambda_pr(inv(X(l))) all in poly-form
    */
-  int num_corrected = 0;
   for (j = count-1; j >=0; j--) {
     num1 = 0;
     for (i = deg_omega; i >= 0; i--) {
@@ -294,7 +291,7 @@
 
     num2 = ALPHA_TO[MODNN(root[j] * (FCR - 1) + NN)];
     den = 0;
-    
+
     /* lambda[i+1] for i even is the formal derivative lambda_pr of lambda[i] */
     for (i = MIN(deg_lambda,NROOTS-1) & ~1; i >= 0; i -=2) {
       if(lambda[i+1] != A0)
@@ -303,8 +300,7 @@
 #if DEBUG >= 1
     if (den == 0) {
       printf("\n ERROR: denominator = 0\n");
-      count = -1;
-      goto finish;
+      return -1;
     }
 #endif
     cor[j] = ALPHA_TO[MODNN(INDEX_OF[num1] + INDEX_OF[num2] + NN - INDEX_OF[den])];
@@ -314,18 +310,16 @@
   /* We compute the syndrome of the 'error' to and check that it matches the
    * syndrome of the received word */
   for(i=0;i<NROOTS;i++) {
-    data_t temp = 0;
+    tmp = 0;
     for(j=0;j<count;j++) {
       if(cor[j]) {
-	int t = (FCR + i) * PRIM * (NN-loc[j]-1);
-	temp ^= ALPHA_TO[MODNN(INDEX_OF[cor[j]] + t)];
+	k = (FCR + i) * PRIM * (NN-loc[j]-1);
+	tmp ^= ALPHA_TO[MODNN(INDEX_OF[cor[j]] + k)];
       }
     }
 
-    if(temp ^ s[i]) {
-      count = RS_ERROR_NOT_A_CODEWORD;
-      goto finish;
-    }
+    if(tmp != s[i])
+      return RS_ERROR_NOT_A_CODEWORD;
   }
 
   /* Apply error to data */
@@ -341,8 +335,6 @@
 	eras_pos[j++] = loc[i] - PAD;
     }
   }
-  count = num_corrected;
 
-finish:
-  retval = count;
+  return num_corrected;
 }
