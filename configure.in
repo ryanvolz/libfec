@@ -83,8 +83,8 @@ darwin*)
 	REBIND=""
 	;;
 *)
-	SH_LIB=libfec.so
-	REBIND=ldconfig
+	SH_LIB=libfec.so.0
+	REBIND=""
 	;;
 esac
 if test "$target" != "$build"
